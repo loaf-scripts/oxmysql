@@ -1,4 +1,6 @@
-export type QueryResponse = Record<string, any>[] | Record<string, any>[][] | any;
+import type { UpsertResult } from 'mariadb';
+
+export type QueryResponse = Record<string, unknown>[] | Record<string, unknown>[][] | UpsertResult;
 
 export type QueryType = 'execute' | 'insert' | 'update' | 'scalar' | 'single' | null;
 

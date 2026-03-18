@@ -3,8 +3,9 @@ export let mysql_slow_query_warning = 200;
 export let mysql_ui = false;
 export let mysql_log_size = 100;
 export let mysql_transaction_isolation_level = 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED';
-export let convertNamedPlaceholders: null | ((query: string, parameters: Record<string, any>) => [string, any[]]) =
-  null;
+export let convertNamedPlaceholders:
+  | null
+  | ((query: string, parameters: Record<string, unknown>) => [string, unknown[]]) = null;
 
 export function updateConfig(config: {
   mysql_debug: boolean | string[];
@@ -22,7 +23,7 @@ export function setIsolationLevel(level: string) {
   mysql_transaction_isolation_level = level;
 }
 
-export function initNamedPlaceholders(optionValue: any) {
+export function initNamedPlaceholders(optionValue: unknown) {
   // Only disable if the user explicitly wrote namedPlaceholders=false (string) in their
   // connection string. Boolean false is our own internal pool override and should not
   // disable named-placeholder conversion.
