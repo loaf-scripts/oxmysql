@@ -1,3 +1,5 @@
+local RESOURCE_NAME = "oxmysql"
+
 local promise = promise
 local Await = Citizen.Await
 local resourceName = GetCurrentResourceName()
@@ -67,7 +69,7 @@ local function safeArgs(query, parameters, cb, transaction)
 	return query, parameters, cb
 end
 
-local oxmysql = exports.oxmysql
+local oxmysql = exports[RESOURCE_NAME]
 
 local mysql_method_mt = {
 	__call = function(self, query, parameters, cb)
@@ -131,7 +133,7 @@ MySQL.Sync = setmetatable({ store = addStore }, alias_mt)
 MySQL.Async = setmetatable({ store = addStore }, alias_mt)
 
 local function onReady(cb)
-	while GetResourceState('oxmysql') ~= 'started' do
+	while GetResourceState(RESOURCE_NAME) ~= 'started' do
 		Wait(50)
 	end
 

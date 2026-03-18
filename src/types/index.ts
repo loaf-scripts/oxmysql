@@ -1,13 +1,4 @@
-import type { OkPacket, ResultSetHeader, RowDataPacket, ProcedureCallPacket } from 'mysql2';
-
-export type QueryResponse =
-  | OkPacket
-  | ResultSetHeader
-  | ResultSetHeader[]
-  | RowDataPacket[]
-  | RowDataPacket[][]
-  | OkPacket[]
-  | ProcedureCallPacket;
+export type QueryResponse = Record<string, any>[] | Record<string, any>[][] | any;
 
 export type QueryType = 'execute' | 'insert' | 'update' | 'scalar' | 'single' | null;
 

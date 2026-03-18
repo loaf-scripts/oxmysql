@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "noImplicitAny": true,
     "module": "es2020",
     "target": "es2021",

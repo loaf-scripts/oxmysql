@@ -1,0 +1,63 @@
+import { MySql, activeConnections, getConnection } from './connection';
+import { logError } from '../logger';
+import type { CFXParameters } from '../../types';
+import { parseArguments } from '../utils/parseArguments';
+
+async function runQuery(conn: MySql | null, sql: string, values: CFXParameters) {
+  [sql, values] = parseArguments(sql, values);
+
+  try {
+    if (!conn) throw new Error(`Connection used by transaction timed out after 30 seconds.`);
+
+    return await conn.query(sql, values);
+  } catch (err: any) {
+    throw new Error(`Query: ${sql}\n${JSON.stringify(values)}\n${err.message}`);
+  }
+}
+
+export const beginTransaction = async (
+  invokingResource: string
+): Promise<{ connectionId: number } | { error: string }> => {
+  try {
+    const conn = await getConnection();
+    await conn.beginTransaction();
+    return { connectionId: conn.id };
+  } catch (err: any) {
+    return { error: logError(invokingResource, err) };
+  }
+};
+
+export const runTransactionQuery = async (
+  invokingResource: string,
+  connectionId: number,
+  sql: string,
+  values: CFXParameters
+): Promise<{ result: any } | { error: string }> => {
+  const conn = activeConnections[connectionId] ?? null;
+
+  try {
+    const result = await runQuery(conn, sql, values);
+    return { result };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+};
+
+export const endTransaction = async (connectionId: number, commit: boolean): Promise<void> => {
+  const conn = activeConnections[connectionId];
+
+  if (!conn) return;
+
+  try {
+    if (commit) {
+      await conn.commit();
+    } else {
+      await conn.rollback();
+    }
+  } catch {
+    // ignore commit/rollback errors
+  } finally {
+    delete activeConnections[connectionId];
+    conn.connection.release();
+  }
+};

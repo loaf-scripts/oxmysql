@@ -1,26 +1,24 @@
-import type { Connection, PoolConnection, TypeCast } from 'mysql2/promise';
-import { scheduleTick } from '../utils/scheduleTick';
+import type { PoolConnection } from 'mariadb';
+import { scheduleTick } from '../utils/events';
 import { sleep } from '../utils/sleep';
 import { pool } from './pool';
-import type { CFXParameters } from 'types';
-import { typeCastExecute } from 'utils/typeCast';
+import type { CFXParameters } from '../../types';
 
 (Symbol as any).dispose ??= Symbol('Symbol.dispose');
 
-const activeConnections: Record<string, MySql> = {};
-
-interface PromisePoolConnection extends Connection {
-  connection: PoolConnection;
-  release: PoolConnection['release'];
-}
+export const activeConnections: Record<number, MySql> = {};
 
 export class MySql {
   id: number;
-  connection: PromisePoolConnection;
+  connection: PoolConnection;
   transaction?: boolean;
 
-  constructor(connection: PromisePoolConnection) {
-    this.id = connection.connection.threadId;
+  constructor(connection: PoolConnection) {
+    if (!connection.threadId) {
+      throw new Error('Connection must have a threadId');
+    }
+
+    this.id = connection.threadId;
     this.connection = connection;
     activeConnections[this.id] = this;
   }
@@ -28,19 +26,20 @@ export class MySql {
   async query(query: string, values: CFXParameters = []) {
     scheduleTick();
 
-    const [result] = await this.connection.query(query, values);
-    return result;
+    return await this.connection.query(query, values);
   }
 
   async execute(query: string, values: CFXParameters = []) {
     scheduleTick();
 
-    const [result] = await this.connection.execute({
-      sql: query,
-      values: values,
-      typeCast: typeCastExecute,
-    });
-    return result;
+    // Use query() (text protocol) to avoid ER_UNSUPPORTED_PS on SELECT/LIMIT queries
+    return await this.connection.query(query, values);
+  }
+
+  async batch(query: string, values: CFXParameters[]) {
+    scheduleTick();
+
+    return await this.connection.batch(query, values);
   }
 
   beginTransaction() {
@@ -69,7 +68,5 @@ export class MySql {
 export async function getConnection(connectionId?: number) {
   while (!pool) await sleep(0);
 
-  return connectionId
-    ? activeConnections[connectionId]
-    : new MySql((await pool.getConnection()) as unknown as PromisePoolConnection);
+  return connectionId ? activeConnections[connectionId] : new MySql(await pool!.getConnection());
 }

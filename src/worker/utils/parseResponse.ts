@@ -1,4 +1,4 @@
-import type { QueryResponse, QueryType } from '../types';
+import type { QueryResponse, QueryType } from '../../types';
 
 export const parseResponse = (type: QueryType, result: QueryResponse): any => {
   switch (type) {

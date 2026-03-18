@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 
 const packageJson = JSON.parse(readFileSync('package.json', { encoding: 'utf8' }));
 const version = process.env.TGT_RELEASE_VERSION;
@@ -38,7 +38,7 @@ dependencies {
 }
 
 client_script 'ui.lua'
-server_script 'dist/build.js'
+server_script 'dist/index.js'
 
 files {
 	'web/build/index.html',
@@ -60,10 +60,11 @@ convar_category 'OxMySQL' {
 `
 );
 
-build({
+mkdirSync('dist', { recursive: true });
+writeFileSync('dist/package.json', JSON.stringify({ type: 'commonjs' }, null, 2));
+
+const sharedConfig = {
   bundle: true,
-  entryPoints: [`./src/index.ts`],
-  outfile: `dist/build.js`,
   keepNames: true,
   dropLabels: ['DEV'],
   legalComments: 'inline',
@@ -71,4 +72,16 @@ build({
   target: ['node22'],
   format: 'cjs',
   logLevel: 'info',
+};
+
+build({
+  ...sharedConfig,
+  entryPoints: [`./src/fivem/index.ts`],
+  outfile: `dist/index.js`,
+});
+
+build({
+  ...sharedConfig,
+  entryPoints: [`./src/worker/worker.ts`],
+  outfile: `dist/worker.js`,
 });

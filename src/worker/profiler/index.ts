@@ -1,8 +1,7 @@
-import { mysql_debug } from 'config';
-import type { MySql } from 'database';
-import { logQuery } from 'logger';
-import type { RowDataPacket } from 'mysql2';
-import type { CFXParameters } from 'types';
+import { mysql_debug } from '../config';
+import type { MySql } from '../database/connection';
+import { logQuery } from '../logger';
+import type { CFXParameters } from '../../types';
 
 const profilerStatements = [
   'SET profiling_history_size = 0',
@@ -34,11 +33,9 @@ export async function profileBatchStatements(
   parameters: CFXParameters | null,
   offset: number
 ) {
-  const profiler = <RowDataPacket[]>(
-    await connection.query(
-      'SELECT FORMAT(SUM(DURATION) * 1000, 4) AS `duration` FROM INFORMATION_SCHEMA.PROFILING GROUP BY QUERY_ID'
-    )
-  );
+  const profiler = (await connection.query(
+    'SELECT FORMAT(SUM(DURATION) * 1000, 4) AS `duration` FROM INFORMATION_SCHEMA.PROFILING GROUP BY QUERY_ID'
+  )) as any[];
 
   for (const statement of profilerStatements) await connection.query(statement);
 

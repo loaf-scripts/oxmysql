@@ -1,4 +1,3 @@
-import type { ConnectionOptions } from 'mysql2';
 import { typeCast } from './utils/typeCast';
 
 export const mysql_connection_string = GetConvar('mysql_connection_string', '');
@@ -70,7 +69,7 @@ function parseUri(connectionString: string) {
 
 export let convertNamedPlaceholders: null | ((query: string, parameters: Record<string, any>) => [string, any[]]);
 
-export function getConnectionOptions(): ConnectionOptions {
+export function getConnectionOptions(): Record<string, any> {
   const options: Record<string, any> = mysql_connection_string.includes('mysql://')
     ? parseUri(mysql_connection_string)
     : mysql_connection_string
@@ -87,7 +86,7 @@ export function getConnectionOptions(): ConnectionOptions {
 
   convertNamedPlaceholders = options.namedPlaceholders === 'false' ? null : require('named-placeholders')();
 
-  for (const key of ['dateStrings', 'flags', 'ssl']) {
+  for (const key of ['ssl']) {
     const value = options[key];
 
     if (typeof value === 'string') {
@@ -99,18 +98,12 @@ export function getConnectionOptions(): ConnectionOptions {
     }
   }
 
-  const flags: string[] = options.flags || [];
-  flags.push(options.database ? 'CONNECT_WITH_DB' : '-CONNECT_WITH_DB');
-
   return {
     connectTimeout: 60000,
-    trace: false,
-    supportBigNumbers: true,
-    jsonStrings: true,
+    bigIntAsNumber: true,
     ...options,
     typeCast,
-    namedPlaceholders: false, // we use our own named-placeholders patch, disable mysql2s
-    flags: flags,
+    namedPlaceholders: false, // we use our own named-placeholders patch
   };
 }
 
