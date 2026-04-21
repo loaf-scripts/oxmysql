@@ -389,6 +389,8 @@ function invokeCb(
   try {
     cb(response.result);
   } catch (err) {
+    console.error('Error in callback for resource', invokingResource, ':', err);
+
     if (typeof err === 'string') {
       if (err.includes('SCRIPT ERROR:')) return console.log(err);
       console.log(`^1SCRIPT ERROR in invoking resource ${invokingResource}: ${err}^0`);
