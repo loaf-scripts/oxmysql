@@ -10,7 +10,14 @@ export let dbVersion = '';
 
 export async function createConnectionPool(options: PoolConfig) {
   try {
-    const dbPool = createPool({ ...options, typeCast, initSql: mysql_transaction_isolation_level });
+    const dbPool = createPool({
+      ...options,
+      typeCast,
+      initSql: mysql_transaction_isolation_level,
+      checkDuplicate: false,
+      bigIntAsNumber: true,
+      insertIdAsNumber: true,
+    });
 
     const result = await dbPool.query<Array<{ version: string }>>('SELECT VERSION() as version');
     dbVersion = `^5[${result[0].version}]`;
